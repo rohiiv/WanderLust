@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Map — Wanderlust</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --deep:#05111f;--mid:#0b1e35;--blue:#133a5e;
+      --accent:#2176ae;--wave:#4facde;--foam:#9dd4f0;
+      --gold:#e8b84b;--white:#eef7ff;
+      --error:#e05c7a;--success:#3dbfa8;
+      --sidebar:350px;
+      --card-bg:#0f2540;
+      --card-shadow:0 4px 18px rgba(0,0,0,.35),0 1px 4px rgba(0,0,0,.2);
+    }
+    html,body,#root{height:100%;overflow:hidden}
+    body{font-family:'Outfit',sans-serif;background:var(--deep);color:var(--white)}
+    #root{display:flex;flex-direction:column}
+
+    .app-nav{height:56px;background:rgba(5,17,31,.98);border-bottom:1px solid rgba(79,172,222,.1);display:flex;align-items:center;padding:0 1.4rem;gap:.8rem;z-index:1000;flex-shrink:0;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+    .logo{font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--wave);font-style:italic;text-decoration:none;letter-spacing:.02em}
+    .nav-sp{flex:1}
+    .user-pill{display:flex;align-items:center;gap:.5rem;background:rgba(19,58,94,.4);border:1px solid rgba(79,172,222,.15);border-radius:50px;padding:.32rem .9rem;font-size:.8rem;color:var(--foam)}
+    .avatar{width:26px;height:26px;background:linear-gradient(135deg,var(--accent),var(--wave));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:600;color:var(--deep)}
+    .logout-btn{background:transparent;border:1px solid rgba(224,92,122,.3);color:rgba(224,92,122,.7);padding:.32rem .8rem;border-radius:50px;font-size:.75rem;cursor:pointer;transition:all .2s;font-family:'Outfit',sans-serif}
+    .logout-btn:hover{background:rgba(224,92,122,.12);color:var(--error)}
+
+    .app-body{flex:1;display:flex;overflow:hidden}
+
+    .sidebar{width:var(--sidebar);background:var(--mid);border-right:1px solid rgba(79,172,222,.08);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+    .sb-head{padding:1.1rem 1.2rem .9rem;border-bottom:1px solid rgba(79,172,222,.07)}
+    .sb-head h2{font-family:'Cormorant Garamond',serif;font-size:1.15rem;margin-bottom:.85rem;font-weight:600}
+    .sb-head h2 em{color:var(--wave);font-style:italic}
+
+    .prog-row{display:flex;align-items:center;gap:.9rem;margin-bottom:.85rem}
+    .ring-wrap{position:relative;width:58px;height:58px;flex-shrink:0}
+    .ring-wrap svg{transform:rotate(-90deg)}
+    .ring-bg{fill:none;stroke:rgba(79,172,222,.08);stroke-width:5}
+    .ring-fill{fill:none;stroke:var(--wave);stroke-width:5;stroke-linecap:round;stroke-dasharray:157;transition:stroke-dashoffset 1s ease}
+    .ring-txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:600;color:var(--wave)}
+    .prog-info p{font-size:.79rem;color:rgba(157,212,240,.55);line-height:1.55}
+    .prog-info strong{color:var(--white)}
+
+    .search-box{width:100%;background:rgba(5,17,31,.55);border:1px solid rgba(79,172,222,.1);border-radius:8px;padding:.48rem .8rem;color:var(--white);font-family:'Outfit',sans-serif;font-size:.82rem;outline:none;transition:border-color .25s;margin-bottom:.65rem}
+    .search-box::placeholder{color:rgba(157,212,240,.2)}
+    .search-box:focus{border-color:rgba(79,172,222,.35)}
+
+    .filters{display:flex;flex-wrap:wrap;gap:.28rem}
+    .ftab{padding:.25rem .6rem;background:transparent;border:1px solid rgba(79,172,222,.12);border-radius:6px;color:rgba(157,212,240,.42);font-size:.68rem;cursor:pointer;transition:all .2s;font-family:'Outfit',sans-serif}
+    .ftab.active{background:rgba(79,172,222,.15);border-color:var(--wave);color:var(--wave)}
+    .ftab:hover:not(.active){border-color:rgba(79,172,222,.25);color:rgba(157,212,240,.7)}
+
+    .dest-list{flex:1;overflow-y:auto;padding:.75rem 1rem}
+    .dest-list::-webkit-scrollbar{width:3px}
+    .dest-list::-webkit-scrollbar-thumb{background:rgba(79,172,222,.15);border-radius:2px}
+    .empty{text-align:center;padding:2.5rem 1rem;color:rgba(157,212,240,.25)}
+    .empty .ei{font-size:2.2rem;margin-bottom:.6rem}
+    .empty p{font-size:.82rem;line-height:1.6}
+
+    /* ── NEW CARD: rectangle + shadow, NO left coloured bar ── */
+    .dcard{
+      background:var(--card-bg);
+      border:1px solid rgba(79,172,222,.1);
+      border-radius:12px;
+      padding:.9rem 1rem;
+      margin-bottom:.65rem;
+      transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;
+      cursor:pointer;
+      box-shadow:var(--card-shadow);
+    }
+    .dcard:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.45),0 2px 8px rgba(79,172,222,.08);border-color:rgba(79,172,222,.22)}
+    .dcard.visited{opacity:.6}
+    .dcard.visited .dname{text-decoration:line-through;color:rgba(157,212,240,.35)}
+
+    .dtop{display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem}
+    .dname{font-weight:500;font-size:.92rem;color:var(--white);line-height:1.3}
+    .dcountry{font-size:.72rem;color:rgba(157,212,240,.4);margin-top:.15rem}
+
+    .dbtns{display:flex;gap:.3rem;flex-shrink:0;margin-top:.05rem}
+    .dbtn{width:28px;height:28px;border-radius:8px;border:1px solid transparent;cursor:pointer;font-size:.75rem;display:flex;align-items:center;justify-content:center;transition:all .2s;background:rgba(255,255,255,.04)}
+    .dbtn-fly{color:rgba(79,172,222,.7);border-color:rgba(79,172,222,.15)}
+    .dbtn-fly:hover{background:rgba(79,172,222,.15);color:var(--wave);border-color:rgba(79,172,222,.3)}
+    .dbtn-visit{color:rgba(61,191,168,.7);border-color:rgba(61,191,168,.15)}
+    .dbtn-visit:hover{background:rgba(61,191,168,.15);color:var(--success);border-color:rgba(61,191,168,.3)}
+    .dbtn-del{color:rgba(224,92,122,.65);border-color:rgba(224,92,122,.15)}
+    .dbtn-del:hover{background:rgba(224,92,122,.15);color:var(--error);border-color:rgba(224,92,122,.3)}
+
+    .dmeta{display:flex;gap:.35rem;margin-top:.6rem;align-items:center;flex-wrap:wrap}
+    .dtag{padding:.14rem .55rem;border-radius:6px;font-size:.67rem;background:rgba(79,172,222,.1);color:rgba(157,212,240,.6);border:1px solid rgba(79,172,222,.1);font-weight:500}
+    .dstatus{font-size:.67rem;padding:.14rem .55rem;border-radius:6px;font-weight:500}
+    .st-wish{background:rgba(232,184,75,.1);color:var(--gold);border:1px solid rgba(232,184,75,.15)}
+    .st-done{background:rgba(61,191,168,.1);color:var(--success);border:1px solid rgba(61,191,168,.15)}
+
+    /* ── ADD FORM ── */
+    .add-section{border-top:1px solid rgba(79,172,222,.08);padding:.9rem 1.1rem 1rem;background:rgba(5,17,31,.3)}
+    .add-title{font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(157,212,240,.35);margin-bottom:.7rem;display:flex;align-items:center;gap:.4rem}
+    .add-grid{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.4rem}
+    .ainp{background:rgba(5,17,31,.6);border:1px solid rgba(79,172,222,.1);border-radius:8px;padding:.5rem .65rem;color:var(--white);font-family:'Outfit',sans-serif;font-size:.8rem;outline:none;width:100%;transition:border-color .2s,background .2s}
+    .ainp::placeholder{color:rgba(157,212,240,.17)}
+    .ainp:focus{border-color:rgba(79,172,222,.38);background:rgba(5,17,31,.8)}
+    .ainp.err{border-color:var(--error)}
+    .ainp.full{grid-column:1/-1}
+    select.ainp{cursor:pointer}
+    select.ainp option{background:var(--mid)}
+    .add-row{display:flex;gap:.4rem}
+    .add-btn{flex:1;padding:.62rem;background:linear-gradient(135deg,var(--accent),var(--wave));color:var(--deep);border:none;border-radius:8px;font-family:'Outfit',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .25s}
+    .add-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(33,118,174,.4)}
+    .add-btn:disabled{opacity:.5;pointer-events:none}
+    .loc-btn{padding:.62rem .8rem;background:rgba(79,172,222,.1);border:1px solid rgba(79,172,222,.2);border-radius:8px;color:var(--wave);cursor:pointer;font-size:.95rem;transition:all .2s}
+    .loc-btn:hover{background:rgba(79,172,222,.22)}
+    .add-err{font-size:.7rem;color:var(--error);margin-top:.3rem}
+    .geo-status{font-size:.7rem;color:var(--wave);margin-top:.3rem}
+
+    .map-area{flex:1;position:relative;overflow:hidden}
+    #map{width:100%;height:100%}
+
+    .leaflet-tile{filter:brightness(.65) saturate(1.2) hue-rotate(195deg)}
+    .leaflet-control-zoom a{background:rgba(11,30,53,.96)!important;color:var(--wave)!important;border-color:rgba(79,172,222,.2)!important}
+    .leaflet-popup-content-wrapper{background:rgba(10,26,48,.97)!important;border:1px solid rgba(79,172,222,.2)!important;border-radius:14px!important;color:var(--white)!important;box-shadow:0 10px 36px rgba(0,0,0,.5)!important}
+    .leaflet-popup-tip{background:rgba(10,26,48,.97)!important}
+    .pop-title{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;margin-bottom:.22rem}
+    .pop-loc{font-size:.76rem;color:rgba(157,212,240,.45);margin-bottom:.4rem}
+    .pop-note{font-size:.75rem;color:rgba(157,212,240,.6);font-style:italic}
+    .pop-tag{display:inline-block;padding:.12rem .55rem;border-radius:6px;font-size:.68rem;background:rgba(79,172,222,.14);color:var(--wave);margin-top:.4rem}
+    .pop-coords{font-size:.66rem;color:rgba(157,212,240,.28);margin-top:.3rem}
+
+    .toast{position:fixed;bottom:1.8rem;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(10,26,48,.97);border:1px solid rgba(79,172,222,.22);border-radius:10px;padding:.65rem 1.5rem;font-size:.82rem;color:var(--foam);z-index:9999;transition:transform .38s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;box-shadow:0 6px 24px rgba(0,0,0,.4)}
+    .toast.show{transform:translateX(-50%) translateY(0)}
+
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .spin{display:inline-block;animation:spin .8s linear infinite}
+
+    @media(max-width:768px){
+      .sidebar{width:100%;position:absolute;bottom:0;z-index:500;max-height:52vh;border-right:none;border-top:1px solid rgba(79,172,222,.12)}
+      .app-body{flex-direction:column}
+      .map-area{height:48vh}
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef, useMemo } = React;
+
+// ════════════════════════════════════════════════════════
+// ADVANCED JS #1: Constructor Function — Destination model
+// ════════════════════════════════════════════════════════
+function Destination(name, country, category = 'City', notes = '', lat = 0, lng = 0) {
+  // default parameters ↑
+  this.id       = 'dest_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+  this.name     = name;
+  this.country  = country;
+  this.category = category;
+  this.notes    = notes;
+  this.lat      = parseFloat(lat) || 0;
+  this.lng      = parseFloat(lng) || 0;
+  this.visited  = false;
+  this.priority = 'medium';
+  this.addedAt  = new Date().toISOString();
+}
+Destination.prototype.toggleVisit = function() { this.visited = !this.visited; return this; };
+Destination.prototype.serialize   = function() { return { ...this }; };
+Destination.fromJSON = function(obj) {
+  const d = new Destination(obj.name, obj.country, obj.category, obj.notes, obj.lat, obj.lng);
+  return Object.assign(d, obj);
+};
+
+// ════════════════════════════════════════════════════════
+// ADVANCED JS #2: Closure — Store module pattern (IIFE)
+// ════════════════════════════════════════════════════════
+const DestinationStore = (function() {
+  const KEY = 'wl_destinations_v2';
+  let _cache = null; // private — only accessible inside closure
+  const _load = () => {
+    if (_cache) return _cache;
+    _cache = JSON.parse(localStorage.getItem(KEY) || '[]').map(Destination.fromJSON);
+    return _cache;
+  };
+  const _save = () => localStorage.setItem(KEY, JSON.stringify(_cache.map(d => d.serialize())));
+  return {
+    getAll:  ()    => [..._load()],
+    find:    (id)  => _load().find(d => d.id === id),
+    add(dest)      { _load().push(dest); _save(); return dest; },
+    remove(id)     { _cache = _load().filter(d => d.id !== id); _save(); },
+    update(id, fn) { const d = _load().find(d => d.id === id); if (d) { fn(d); _save(); } return d; },
+  };
+})();
+
+// ════════════════════════════════════════════════════════
+// ADVANCED JS #3: Higher-Order Function — SVG marker factory
+// ════════════════════════════════════════════════════════
+const withSVGMarker = (getConfig) => (category, visited) => {
+  const cfg = getConfig(category, visited);
+  const uid = category + (visited ? 'v' : 'n');
+  const svg = `<svg width="38" height="50" viewBox="0 0 38 50" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <filter id="ds${uid}"><feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="rgba(0,0,0,.45)"/></filter>
+      <radialGradient id="pg${uid}" cx="35%" cy="28%">
+        <stop offset="0%" stop-color="${cfg.light}"/>
+        <stop offset="100%" stop-color="${cfg.color}"/>
+      </radialGradient>
+    </defs>
+    <path d="M19 2C9.6 2 2 9.6 2 19C2 30 19 48 19 48S36 30 36 19C36 9.6 28.4 2 19 2Z"
+      fill="url(#pg${uid})" filter="url(#ds${uid})" opacity="${visited?.65:1}"/>
+    <circle cx="19" cy="18" r="10" fill="rgba(255,255,255,.22)"/>
+    <text x="19" y="23" text-anchor="middle" font-size="13">${cfg.emoji}</text>
+    ${visited?'<path d="M12,18 L17,23 L26,13" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>':""}
+  </svg>`;
+  return L.divIcon({ html: svg, className:'', iconSize:[38,50], iconAnchor:[19,50], popupAnchor:[0,-52] });
+};
+
+const CATEGORY_CONFIG = {
+  Beach:     { color:'#c8922a', light:'#f0c060', emoji:'🏖' },
+  Mountain:  { color:'#4a8aa8', light:'#9dd4f0', emoji:'⛰' },
+  City:      { color:'#1e6fbf', light:'#4facde', emoji:'🏙' },
+  Adventure: { color:'#2a9a88', light:'#3dbfa8', emoji:'🧗' },
+};
+const getCategoryConfig = (cat, visited) =>
+  visited ? { color:'#2a9a88', light:'#3dbfa8', emoji:'✅' }
+          : (CATEGORY_CONFIG[cat] || { color:'#2176ae', light:'#4facde', emoji:'📍' });
+const createMarkerIcon = withSVGMarker(getCategoryConfig);
+
+// ════════════════════════════════════════════════════════
+// ADVANCED JS #4: Geocoding — find real coordinates by city name
+// Uses Nominatim (OpenStreetMap free API — no key needed)
+// ════════════════════════════════════════════════════════
+const geocodeCity = async (cityName, countryName = '') => {
+  // default parameter ↑
+  const query = countryName ? `${cityName}, ${countryName}` : cityName;
+  const url   = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
+  try {
+    const res  = await fetch(url, { headers: { 'Accept-Language':'en' } });
+    const data = await res.json();
+    if (data && data.length > 0) {
+      const { lat, lon } = data[0]; // destructuring
+      return { lat: parseFloat(lat), lng: parseFloat(lon) };
+    }
+    return null;
+  } catch { return null; }
+};
+
+// ════════════════════════════════════════════════════════
+// ADVANCED JS #5: JSON seed data — async fetch with fallback
+// ════════════════════════════════════════════════════════
+async function loadSeedData() {
+  try {
+    const res  = await fetch('./data.json');
+    const json = await res.json();
+    const { destinations } = json; // destructuring
+    return destinations.map(Destination.fromJSON);
+  } catch {
+    return [
+      new Destination('Santorini', 'Greece',    'Beach',    'Watch the sunset from Oia', 36.3932,  25.4615),
+      new Destination('Banff',     'Canada',    'Mountain', 'Lake Louise at dawn',       51.4968,-115.928),
+      new Destination('Tokyo',     'Japan',     'City',     'Shibuya crossing at night', 35.6762, 139.650),
+      new Destination('Patagonia', 'Argentina', 'Adventure','End of the world trek',    -50.942, -73.378),
+    ];
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// CUSTOM HOOK: useDestinations
+// ════════════════════════════════════════════════════════
+function useDestinations() {
+  const [dests,  setDests]  = useState([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      let stored = DestinationStore.getAll();
+      if (stored.length === 0) {
+        const seeds = await loadSeedData();
+        seeds.forEach(d => DestinationStore.add(d));
+        stored = DestinationStore.getAll();
+      }
+      setDests(stored);
+      setLoaded(true);
+    })();
+  }, []);
+
+  const add    = useCallback((d)  => { DestinationStore.add(d);    setDests(DestinationStore.getAll()); return d; }, []);
+  const remove = useCallback((id) => { DestinationStore.remove(id); setDests(DestinationStore.getAll()); }, []);
+  const toggle = useCallback((id) => {
+    const u = DestinationStore.update(id, d => d.toggleVisit());
+    setDests(DestinationStore.getAll());
+    return u;
+  }, []);
+
+  const stats = useMemo(() => {
+    const total   = dests.length;
+    const visited = dests.filter(d => d.visited).length;
+    const pct     = total === 0 ? 0 : Math.round((visited / total) * 100);
+    return { total, visited, pct };
+  }, [dests]);
+
+  return { dests, loaded, add, remove, toggle, stats };
+}
+
+// ════════════════════════════════════════════════════════
+// CUSTOM HOOK: useGeolocation
+// ════════════════════════════════════════════════════════
+function useGeolocation() {
+  const [coords,  setCoords]  = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const locate = useCallback(() => {
+    if (!navigator.geolocation) return;
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords: { latitude, longitude } }) => { setCoords({ lat: latitude, lng: longitude }); setLoading(false); },
+      ()                                      => { setLoading(false); }
+    );
+  }, []);
+
+  return { coords, loading, locate };
+}
+
+// ════════════════════════════════════════════════════════
+// COMPONENT: ProgressRing
+// ════════════════════════════════════════════════════════
+function ProgressRing({ pct }) {
+  const offset = 157 - (157 * pct / 100);
+  return (
+    <div className="ring-wrap">
+      <svg width="58" height="58" viewBox="0 0 58 58">
+        <circle className="ring-bg"   cx="29" cy="29" r="25"/>
+        <circle className="ring-fill" cx="29" cy="29" r="25" style={{ strokeDashoffset: offset }}/>
+      </svg>
+      <div className="ring-txt">{pct}%</div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════
+// COMPONENT: AddForm — geocodes city name → correct lat/lng
+// ════════════════════════════════════════════════════════
+function AddForm({ onAdd, onLocate, geoLoading }) {
+  const [fields,    setFields]    = useState({ name:'', country:'', category:'', notes:'' });
+  const [err,       setErr]       = useState('');
+  const [geocoding, setGeocoding] = useState(false);
+  const [geoMsg,    setGeoMsg]    = useState('');
+
+  const set = (key) => (val) => setFields(f => ({ ...f, [key]: val }));
+
+  const handleAdd = async () => {
+    const { name, country, category, notes } = fields; // destructuring
+    if (!name.trim()) { setErr('Destination name is required'); return; }
+    setErr('');
+    setGeocoding(true);
+    setGeoMsg('🔍 Finding location on map…');
+
+    // Geocode: get real coordinates from city name
+    const found = await geocodeCity(name.trim(), country.trim());
+    const lat   = found ? found.lat : 0;
+    const lng   = found ? found.lng : 0;
+
+    setGeoMsg(found ? `✓ Pinned on map!` : '⚠ Not found — placed at default');
+    setGeocoding(false);
+    setTimeout(() => setGeoMsg(''), 2200);
+
+    // Constructor function with default params
+    const dest = new Destination(
+      name.trim(),
+      country.trim() || 'Unknown',
+      category || 'City',
+      notes.trim(),
+      lat,
+      lng
+    );
+    onAdd(dest);
+    setFields({ name:'', country:'', category:'', notes:'' });
+  };
+
+  return (
+    <div className="add-section">
+      <div className="add-title">📍 Add Destination</div>
+      <div className="add-grid">
+        <input className={`ainp${err?' err':''}`} placeholder="City / Place *"
+          value={fields.name} onChange={e=>set('name')(e.target.value)}
+          onKeyDown={e=>e.key==='Enter'&&handleAdd()}/>
+        <input className="ainp" placeholder="Country"
+          value={fields.country} onChange={e=>set('country')(e.target.value)}/>
+        <select className="ainp" value={fields.category} onChange={e=>set('category')(e.target.value)}>
+          <option value="">Category</option>
+          {Object.entries(CATEGORY_CONFIG).map(([id,{emoji}])=>
+            <option key={id} value={id}>{emoji} {id}</option>
+          )}
+        </select>
+        <input className="ainp" placeholder="Notes (optional)"
+          value={fields.notes} onChange={e=>set('notes')(e.target.value)}/>
+      </div>
+      {err    && <div className="add-err">⚠ {err}</div>}
+      {geoMsg && <div className="geo-status" style={{fontSize:'.7rem',color:'var(--wave)',marginTop:'.3rem'}}>{geoMsg}</div>}
+      <div className="add-row" style={{marginTop:'.45rem'}}>
+        <button className="add-btn" onClick={handleAdd} disabled={geocoding}>
+          {geocoding ? '⌛ Locating…' : '+ Add to Map'}
+        </button>
+        <button className="loc-btn" onClick={onLocate} title="Use my GPS" disabled={geoLoading}>
+          {geoLoading?'⌛':'📍'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════
+// COMPONENT: DestCard — clean rectangle + shadow, no left bar
+// ════════════════════════════════════════════════════════
+function DestCard({ dest, onFly, onToggle, onDelete }) {
+  const catEmoji = CATEGORY_CONFIG[dest.category]?.emoji || '📍';
+  return (
+    <div className={`dcard${dest.visited?' visited':''}`}>
+      <div className="dtop">
+        <div>
+          <div className="dname">{dest.name}</div>
+          <div className="dcountry">{dest.country}</div>
+        </div>
+        <div className="dbtns">
+          <button className="dbtn dbtn-fly"   title="Fly to" onClick={()=>onFly(dest.id)}>🎯</button>
+          <button className="dbtn dbtn-visit" title={dest.visited?'Wishlist':'Visited'} onClick={()=>onToggle(dest.id)}>
+            {dest.visited?'↩':'✓'}
+          </button>
+          <button className="dbtn dbtn-del" title="Delete" onClick={()=>onDelete(dest.id)}>✕</button>
+        </div>
+      </div>
+      <div className="dmeta">
+        {dest.category && <span className="dtag">{catEmoji} {dest.category}</span>}
+        <span className={`dstatus ${dest.visited?'st-done':'st-wish'}`}>
+          {dest.visited ? '✅ Visited' : '⭐ Wishlist'}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════
+// MAIN APP
+// ════════════════════════════════════════════════════════
+function App() {
+  const { dests, loaded, add, remove, toggle, stats } = useDestinations();
+  const { coords, loading: geoLoading, locate }       = useGeolocation();
+  const [filter,  setFilter]  = useState('all');
+  const [search,  setSearch]  = useState('');
+  const [toast,   setToast]   = useState({ show:false, msg:'' });
+  const [session, setSession] = useState(null);
+
+  const mapRef     = useRef(null);
+  const markersRef = useRef({});
+  const myPinRef   = useRef(null);
+  const toastTimer = useRef(null);
+
+  // Auth guard
+  useEffect(() => {
+    const s = localStorage.getItem('wl_session');
+    if (!s) { window.location.href = 'login.html'; return; }
+    setSession(JSON.parse(s));
+  }, []);
+
+  // Init map
+  useEffect(() => {
+    if (mapRef.current) return;
+    mapRef.current = L.map('map').setView([20, 10], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap' }).addTo(mapRef.current);
+    mapRef.current.on('click', ({ latlng:{lat,lng} }) => {
+      showToast(`🗺️ Clicked: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+    });
+  }, []);
+
+  // Sync markers whenever dests changes
+  useEffect(() => {
+    if (!mapRef.current || !loaded) return;
+    const ids = new Set(dests.map(d => d.id));
+
+    // Remove stale
+    Object.keys(markersRef.current).forEach(id => {
+      if (!ids.has(id)) { mapRef.current.removeLayer(markersRef.current[id]); delete markersRef.current[id]; }
+    });
+
+    // Add / refresh — array HOF usage
+    dests.forEach(dest => {
+      if (markersRef.current[dest.id]) mapRef.current.removeLayer(markersRef.current[dest.id]);
+      const m = L.marker([dest.lat, dest.lng||0], { icon: createMarkerIcon(dest.category, dest.visited) });
+      m.bindPopup(`
+        <div class="pop-title">${dest.name}</div>
+        <div class="pop-loc">📍 ${dest.country}</div>
+        ${dest.notes?`<div class="pop-note">"${dest.notes}"</div>`:''}
+        <div style="margin-top:.4rem">
+          <span class="pop-tag">${CATEGORY_CONFIG[dest.category]?.emoji||'📍'} ${dest.category||'Destination'}</span>
+          ${dest.visited?'<span class="pop-tag" style="background:rgba(61,191,168,.15);color:#3dbfa8;margin-left:4px">✅ Visited</span>':''}
+        </div>
+        <div class="pop-coords">${dest.lat.toFixed(4)}, ${(dest.lng||0).toFixed(4)}</div>
+      `);
+      m.addTo(mapRef.current);
+      markersRef.current[dest.id] = m;
+    });
+  }, [dests, loaded]);
+
+  // Geolocation pin
+  useEffect(() => {
+    if (!coords || !mapRef.current) return;
+    if (myPinRef.current) mapRef.current.removeLayer(myPinRef.current);
+    const meIcon = L.divIcon({
+      html:`<svg width="42" height="54" viewBox="0 0 42 54" xmlns="http://www.w3.org/2000/svg">
+        <defs><filter id="mef"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="rgba(224,92,122,.5)"/></filter></defs>
+        <path d="M21 2C11 2 3 10 3 20C3 32 21 52 21 52S39 32 39 20C39 10 31 2 21 2Z" fill="#e05c7a" filter="url(#mef)"/>
+        <circle cx="21" cy="19" r="11" fill="rgba(255,255,255,.28)"/>
+        <text x="21" y="24.5" text-anchor="middle" font-size="14">👤</text>
+      </svg>`,
+      className:'', iconSize:[42,54], iconAnchor:[21,54], popupAnchor:[0,-56]
+    });
+    myPinRef.current = L.marker([coords.lat, coords.lng], { icon: meIcon })
+      .bindPopup(`<div class="pop-title">You are here!</div><div class="pop-loc">${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}</div>`)
+      .addTo(mapRef.current);
+    mapRef.current.flyTo([coords.lat, coords.lng], 10, { animate:true, duration:2 });
+    myPinRef.current.openPopup();
+    showToast('📍 Your location found!');
+  }, [coords]);
+
+  const showToast = useCallback((msg) => {
+    clearTimeout(toastTimer.current);
+    setToast({ show:true, msg });
+    toastTimer.current = setTimeout(() => setToast(t => ({...t, show:false})), 2800);
+  }, []);
+
+  const handleAdd = useCallback((dest) => {
+    add(dest);
+    if (dest.lat !== 0 || dest.lng !== 0)
+      mapRef.current?.flyTo([dest.lat, dest.lng], 6, { animate:true, duration:1.8 });
+    showToast(`📍 ${dest.name} pinned on map!`);
+  }, [add, showToast]);
+
+  const handleToggle = useCallback((id) => {
+    const u = toggle(id);
+    if (u) showToast(u.visited ? `✅ ${u.name} marked visited!` : `⭐ Moved to wishlist`);
+  }, [toggle, showToast]);
+
+  const handleDelete = useCallback((id) => {
+    const d = DestinationStore.find(id);
+    remove(id);
+    showToast(`🗑 ${d?.name||'Destination'} removed`);
+  }, [remove, showToast]);
+
+  const flyTo = useCallback((id) => {
+    const d = DestinationStore.find(id);
+    if (!d) return;
+    mapRef.current?.flyTo([d.lat, d.lng||0], 7, { animate:true, duration:1.8 });
+    markersRef.current[id]?.openPopup();
+  }, []);
+
+  // useMemo: filtered list
+  const filtered = useMemo(() =>
+    dests
+      .filter(d => {
+        if (filter==='visited')  return d.visited;
+        if (filter==='wishlist') return !d.visited;
+        if (CATEGORY_CONFIG[filter]) return d.category===filter;
+        return true;
+      })
+      .filter(d => !search || [d.name,d.country,d.category].some(f=>f?.toLowerCase().includes(search.toLowerCase())))
+  , [dests, filter, search]);
+
+  const logout  = () => { localStorage.removeItem('wl_session'); window.location.href='login.html'; };
+  const initials = session?.name?.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
+
+  return (
+    <>
+      <nav className="app-nav">
+        <a href="index.html" className="logo">Wanderlust</a>
+        <div className="nav-sp"/>
+        <div className="user-pill">
+          <div className="avatar">{initials}</div>
+          <span>{session?.name?.split(' ')[0]||'Traveller'}</span>
+        </div>
+        <button className="logout-btn" onClick={logout}>Logout</button>
+      </nav>
+
+      <div className="app-body">
+        <aside className="sidebar">
+          <div className="sb-head">
+            <h2>My <em>Bucket List</em></h2>
+            <div className="prog-row">
+              <ProgressRing pct={stats.pct}/>
+              <div className="prog-info">
+                <p><strong>{stats.visited}</strong> visited of <strong>{stats.total}</strong></p>
+                <p style={{marginTop:'.18rem',fontSize:'.72rem'}}>
+                  {stats.pct===100?'🎉 You\'ve seen it all!':'Keep exploring 🌍'}
+                </p>
+              </div>
+            </div>
+            <input className="search-box" placeholder="🔍  Search destinations…"
+              value={search} onChange={e=>setSearch(e.target.value)}/>
+            <div className="filters">
+              {['all','wishlist','visited',...Object.keys(CATEGORY_CONFIG)].map(f=>(
+                <button key={f} className={`ftab${filter===f?' active':''}`} onClick={()=>setFilter(f)}>
+                  {CATEGORY_CONFIG[f]?.emoji} {f.charAt(0).toUpperCase()+f.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="dest-list">
+            {filtered.length===0
+              ? <div className="empty"><div className="ei">🌍</div><p>{dests.length===0?'Loading…':'No results.'}</p></div>
+              : filtered.map(d=>(
+                  <DestCard key={d.id} dest={d}
+                    onFly={flyTo} onToggle={handleToggle} onDelete={handleDelete}/>
+                ))
+            }
+          </div>
+
+          <AddForm onAdd={handleAdd} onLocate={locate} geoLoading={geoLoading}/>
+        </aside>
+
+        <div className="map-area"><div id="map"/></div>
+      </div>
+
+      <div className={`toast${toast.show?' show':''}`}>{toast.msg}</div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

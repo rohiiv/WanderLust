@@ -1,0 +1,89 @@
+{
+  "destinations": [
+    {
+      "id": "dest_001",
+      "name": "Santorini",
+      "country": "Greece",
+      "continent": "Europe",
+      "category": "Beach",
+      "lat": 36.3932,
+      "lng": 25.4615,
+      "notes": "Watch the sunset from Oia — the blue domes and white walls are dreamlike.",
+      "visited": false,
+      "priority": "high",
+      "addedAt": "2024-01-15T10:30:00Z"
+    },
+    {
+      "id": "dest_002",
+      "name": "Banff National Park",
+      "country": "Canada",
+      "continent": "North America",
+      "category": "Mountain",
+      "lat": 51.4968,
+      "lng": -115.9281,
+      "notes": "Lake Louise and Moraine Lake are absolutely unreal. Best in September.",
+      "visited": true,
+      "priority": "high",
+      "addedAt": "2024-02-01T08:00:00Z"
+    },
+    {
+      "id": "dest_003",
+      "name": "Tokyo",
+      "country": "Japan",
+      "continent": "Asia",
+      "category": "City",
+      "lat": 35.6762,
+      "lng": 139.6503,
+      "notes": "Shibuya crossing, ramen at 2am, cherry blossoms in Ueno Park.",
+      "visited": false,
+      "priority": "high",
+      "addedAt": "2024-02-14T12:00:00Z"
+    },
+    {
+      "id": "dest_004",
+      "name": "Patagonia",
+      "country": "Argentina",
+      "continent": "South America",
+      "category": "Adventure",
+      "lat": -50.9423,
+      "lng": -73.3786,
+      "notes": "Torres del Paine trek — raw, wild, end-of-the-world vibes.",
+      "visited": false,
+      "priority": "medium",
+      "addedAt": "2024-03-01T09:00:00Z"
+    },
+    {
+      "id": "dest_005",
+      "name": "Amalfi Coast",
+      "country": "Italy",
+      "continent": "Europe",
+      "category": "Beach",
+      "lat": 40.6340,
+      "lng": 14.6027,
+      "notes": "Positano from the cliffside — pastel houses tumbling into the turquoise sea.",
+      "visited": false,
+      "priority": "medium",
+      "addedAt": "2024-03-10T11:00:00Z"
+    },
+    {
+      "id": "dest_006",
+      "name": "Kyoto",
+      "country": "Japan",
+      "continent": "Asia",
+      "category": "City",
+      "lat": 35.0116,
+      "lng": 135.7681,
+      "notes": "Fushimi Inari at dawn before the crowds arrive. Thousand torii gates.",
+      "visited": true,
+      "priority": "high",
+      "addedAt": "2024-03-20T07:30:00Z"
+    }
+  ],
+  "categories": [
+    { "id": "Beach",     "label": "Beach",     "emoji": "🏖",  "color": "#e8b84b" },
+    { "id": "Mountain",  "label": "Mountain",  "emoji": "⛰",  "color": "#9dd4f0" },
+    { "id": "City",      "label": "City",      "emoji": "🏙",  "color": "#4facde" },
+    { "id": "Adventure", "label": "Adventure", "emoji": "🧗", "color": "#3dbfa8" }
+  ],
+  "priorities": ["high", "medium", "low"]
+}

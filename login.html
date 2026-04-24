@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login — Wanderlust</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    :root{--deep:#05111f;--mid:#0b1e35;--blue:#133a5e;--accent:#2176ae;--wave:#4facde;--foam:#9dd4f0;--gold:#e8b84b;--white:#eef7ff;--error:#e05c7a;--success:#3dbfa8}
+    body{font-family:'Outfit',sans-serif;background:var(--deep);color:var(--white);min-height:100vh;display:flex}
+    #root{display:flex;width:100%;min-height:100vh}
+
+    .left{flex:1;background:linear-gradient(160deg,var(--mid) 0%,var(--blue) 60%,#0d3060 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem;position:relative;overflow:hidden}
+    .left::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 60% 40%,rgba(79,172,222,.12),transparent 60%)}
+    .route-wrap{position:relative;z-index:1;width:100%;max-width:380px;margin-bottom:2.5rem}
+    .route-wrap svg{width:100%;filter:drop-shadow(0 0 24px rgba(79,172,222,.18))}
+    .quote{position:relative;z-index:1;text-align:center}
+    .quote blockquote{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-style:italic;color:rgba(157,212,240,.85);line-height:1.55;margin-bottom:.6rem}
+    .quote cite{font-size:.78rem;color:rgba(157,212,240,.35)}
+    .qdots{display:flex;gap:.45rem;justify-content:center;margin-top:1.3rem}
+    .qdot{width:7px;height:7px;border-radius:50%;background:rgba(79,172,222,.28);animation:qdp var(--d) ease-in-out infinite alternate}
+    @keyframes qdp{from{opacity:.28;transform:scale(.8)}to{opacity:1;transform:scale(1.2);background:#4facde}}
+
+    .right{width:480px;background:var(--deep);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem 2.5rem}
+    .form-wrap{width:100%;max-width:380px}
+    .back{display:inline-flex;align-items:center;gap:.4rem;color:rgba(157,212,240,.4);font-size:.83rem;text-decoration:none;margin-bottom:2.5rem;transition:color .2s}
+    .back:hover{color:var(--wave)}
+    .fh h1{font-family:'Cormorant Garamond',serif;font-size:2.6rem;margin-bottom:.3rem;line-height:1.1;font-weight:600}
+    .fh h1 em{color:var(--wave);font-style:italic}
+    .fh p{color:rgba(157,212,240,.45);font-size:.88rem;font-weight:300;margin-bottom:2rem}
+
+    .field{margin-bottom:1.2rem}
+    .field label{display:block;font-size:.73rem;text-transform:uppercase;letter-spacing:.09em;color:rgba(157,212,240,.5);margin-bottom:.45rem;font-weight:500}
+    .inp-wrap{position:relative}
+    .inp-icon{position:absolute;left:.9rem;top:50%;transform:translateY(-50%);font-size:.95rem;pointer-events:none}
+    input[type=email],input[type=password],input[type=text]{width:100%;background:rgba(19,58,94,.2);border:1.5px solid rgba(79,172,222,.1);border-radius:11px;padding:.85rem .9rem .85rem 2.7rem;color:var(--white);font-family:'Outfit',sans-serif;font-size:.93rem;outline:none;transition:all .3s}
+    input::placeholder{color:rgba(157,212,240,.18)}
+    input:focus{border-color:var(--wave);background:rgba(19,58,94,.35);box-shadow:0 0 0 3px rgba(79,172,222,.08)}
+    input.err{border-color:var(--error)!important}
+    .err-msg{font-size:.72rem;color:var(--error);margin-top:.35rem}
+    .eye-btn{position:absolute;right:.9rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:rgba(79,172,222,.33);font-size:.95rem;transition:color .2s}
+    .eye-btn:hover{color:var(--wave)}
+
+    .opts{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.4rem}
+    .remember{display:flex;align-items:center;gap:.5rem}
+    .remember input{width:auto;padding:0;accent-color:var(--wave)}
+    .remember label{font-size:.8rem;color:rgba(157,212,240,.45);font-weight:300}
+    .forgot{font-size:.8rem;color:var(--wave);text-decoration:none}
+    .forgot:hover{text-decoration:underline}
+
+    .alert-box{padding:.75rem 1rem;border-radius:10px;font-size:.83rem;margin-bottom:1.1rem;display:flex;align-items:center;gap:.5rem;animation:slideIn .3s ease}
+    @keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+    .alert-err{background:rgba(224,92,122,.1);border:1px solid rgba(224,92,122,.28);color:var(--error)}
+    .alert-ok{background:rgba(61,191,168,.1);border:1px solid rgba(61,191,168,.28);color:var(--success)}
+
+    .submit-btn{width:100%;padding:.95rem;background:linear-gradient(135deg,var(--accent),var(--wave));color:var(--deep);border:none;border-radius:11px;font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .3s;box-shadow:0 4px 18px rgba(33,118,174,.32)}
+    .submit-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(33,118,174,.48)}
+    .submit-btn:disabled{opacity:.65;pointer-events:none}
+
+    .divider{display:flex;align-items:center;gap:1rem;margin:1.4rem 0;color:rgba(157,212,240,.22);font-size:.78rem}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(79,172,222,.08)}
+
+    .switch-link{text-align:center;font-size:.85rem;color:rgba(157,212,240,.4)}
+    .switch-link a{color:var(--wave);text-decoration:none;font-weight:500}
+    .switch-link a:hover{text-decoration:underline}
+
+    .demo-hint{margin-top:.9rem;padding:.7rem;background:rgba(79,172,222,.06);border:1px solid rgba(79,172,222,.12);border-radius:8px;font-size:.75rem;color:rgba(157,212,240,.45);text-align:center;line-height:1.5}
+    .demo-hint strong{color:var(--wave)}
+
+    @media(max-width:860px){.left{display:none}.right{width:100%}}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useCallback, useEffect } = React;
+
+// ═══════════════════════════════════════════════════════════
+// ADVANCED JS: Closure — Auth service (singleton via IIFE)
+// ═══════════════════════════════════════════════════════════
+const AuthService = (function() {
+  // Private state — closure captures these
+  let _attempts = 0;
+  const MAX_ATTEMPTS = 5;
+  const DEMO = { email: 'demo@wanderlust.com', password: 'demo1234', name: 'Demo Traveller', id: 'demo_user' };
+
+  return {
+    login(email, password) {
+      _attempts++;
+      if (_attempts > MAX_ATTEMPTS) return { ok: false, msg: 'Too many attempts. Please try later.' };
+
+      // Check demo account first
+      if (email === DEMO.email && password === DEMO.password) {
+        _attempts = 0;
+        return { ok: true, user: { id: DEMO.id, name: DEMO.name, email: DEMO.email } };
+      }
+
+      // Check localStorage users
+      const users = JSON.parse(localStorage.getItem('wl_users') || '[]');
+      // ADVANCED JS: Array destructuring + find
+      const found = users.find(u => u.email === email && u.password === password);
+      if (found) {
+        _attempts = 0;
+        const { id, name, email: em } = found; // destructuring
+        return { ok: true, user: { id, name, email: em } };
+      }
+      return { ok: false, msg: `Invalid credentials. ${MAX_ATTEMPTS - _attempts} attempts remaining.` };
+    },
+    getAttempts: () => _attempts,
+    reset: () => { _attempts = 0; }
+  };
+})();
+
+// ═══════════════════════════════════════════════════════════
+// REACT COMPONENT: LoginPage
+// ═══════════════════════════════════════════════════════════
+function LoginPage() {
+  const [email,   setEmail]   = useState('');
+  const [pwd,     setPwd]     = useState('');
+  const [showPwd, setShowPwd] = useState(false);
+  const [remember,setRemember]= useState(false);
+  const [alert,   setAlert]   = useState(null); // { type, msg }
+  const [errors,  setErrors]  = useState({});
+  const [loading, setLoading] = useState(false);
+
+  // useEffect: check for existing session
+  useEffect(() => {
+    const session = localStorage.getItem('wl_session');
+    if (session) {
+      const { name } = JSON.parse(session);
+      setAlert({ type: 'ok', msg: `Welcome back, ${name.split(' ')[0]}! Redirecting...` });
+      setTimeout(() => window.location.href = 'app.html', 1200);
+    }
+  }, []);
+
+  // useCallback — memoised validation
+  const validate = useCallback(() => {
+    const errs = {};
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = 'Enter a valid email';
+    if (!pwd)                                         errs.pwd   = 'Password is required';
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  }, [email, pwd]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validate()) return;
+    setLoading(true);
+    setAlert(null);
+    await new Promise(r => setTimeout(r, 900));
+
+    const result = AuthService.login(email.trim(), pwd);
+    if (result.ok) {
+      localStorage.setItem('wl_session', JSON.stringify(result.user));
+      if (!remember) {
+        // Session only — will be cleared on tab close (simulated)
+      }
+      setAlert({ type: 'ok', msg: `Welcome back, ${result.user.name.split(' ')[0]}! 🎉` });
+      setTimeout(() => window.location.href = 'app.html', 900);
+    } else {
+      setAlert({ type: 'err', msg: result.msg });
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div id="root" style={{display:'flex',width:'100%',minHeight:'100vh'}}>
+      {/* Left */}
+      <div className="left">
+        <div className="route-wrap">
+          <svg viewBox="0 0 380 260" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
+                <path d="M 28 0 L 0 0 0 28" fill="none" stroke="rgba(79,172,222,.05)" strokeWidth="1"/>
+              </pattern>
+              <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <rect width="380" height="260" fill="url(#grid)"/>
+            <path d="M55,210 Q130,170 165,130 Q200,90 245,112 Q290,134 310,72" fill="none" stroke="#4facde" strokeWidth="1.8" strokeDasharray="6,5" opacity=".45"/>
+            {/* City pins */}
+            {[
+              { cx:55,  cy:210, fill:'#e8b84b', lbl:'Mumbai',   tx:70  },
+              { cx:165, cy:130, fill:'#4facde', lbl:'Dubai',    tx:180 },
+              { cx:245, cy:112, fill:'#4facde', lbl:'Paris',    tx:260 },
+              { cx:310, cy:72,  fill:'#3dbfa8', lbl:'New York', tx:320 }
+            ].map(({ cx, cy, fill, lbl, tx }, i) => (
+              <g key={i}>
+                <circle cx={cx} cy={cy} r="7" fill={fill} filter="url(#glow)">
+                  {i === 0 || i === 3 ? <animate attributeName="r" values="7;14;7" dur="2.5s" begin={`${i}s`} repeatCount="indefinite"/> : null}
+                </circle>
+                {i === 0 || i === 3 ? <circle cx={cx} cy={cy} r="13" fill="none" stroke={fill} strokeWidth="1.2" opacity=".35">
+                  <animate attributeName="r" from="7" to="20" dur="2.5s" begin={`${i}s`} repeatCount="indefinite"/>
+                  <animate attributeName="opacity" from=".5" to="0" dur="2.5s" begin={`${i}s`} repeatCount="indefinite"/>
+                </circle> : null}
+                <text x={tx} y={cy + 5} fill="rgba(157,212,240,.65)" fontSize="10" fontFamily="Outfit, sans-serif">{lbl}</text>
+              </g>
+            ))}
+            {/* Plane */}
+            <g transform="translate(205,110) rotate(-35)" opacity=".85">
+              <path d="M0,-7 L5,7 L0,3.5 L-5,7 Z" fill="#4facde"/>
+              <path d="M-9,1 L9,1" stroke="#4facde" strokeWidth="2.2" strokeLinecap="round"/>
+            </g>
+          </svg>
+        </div>
+        <div className="quote">
+          <blockquote>"The world is a book, and those who do not travel read only one page."</blockquote>
+          <cite>— Saint Augustine</cite>
+          <div className="qdots">
+            {[1.8,2.3,2].map((d,i)=><div key={i} className="qdot" style={{'--d':`${d}s`,animationDelay:`${i*.3}s`}}/>)}
+          </div>
+        </div>
+      </div>
+
+      {/* Right */}
+      <div className="right">
+        <div className="form-wrap">
+          <a href="index.html" className="back">← Back to home</a>
+          <div className="fh">
+            <h1>Welcome<br/><em>back</em></h1>
+            <p>Your destinations are waiting</p>
+          </div>
+
+          {alert && (
+            <div className={`alert-box ${alert.type === 'err' ? 'alert-err' : 'alert-ok'}`}>
+              {alert.type === 'err' ? '⚠' : '✓'} {alert.msg}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} noValidate>
+            <div className="field">
+              <label htmlFor="email">Email Address</label>
+              <div className="inp-wrap">
+                <span className="inp-icon">✉️</span>
+                <input type="email" id="email" placeholder="alex@example.com"
+                  value={email} onChange={e => setEmail(e.target.value)}
+                  className={errors.email ? 'err' : ''} autoComplete="email"/>
+              </div>
+              {errors.email && <div className="err-msg">⚠ {errors.email}</div>}
+            </div>
+
+            <div className="field">
+              <label htmlFor="pwd">Password</label>
+              <div className="inp-wrap">
+                <span className="inp-icon">🔒</span>
+                <input type={showPwd ? 'text' : 'password'} id="pwd" placeholder="Your password"
+                  value={pwd} onChange={e => setPwd(e.target.value)}
+                  className={errors.pwd ? 'err' : ''} autoComplete="current-password"/>
+                <button type="button" className="eye-btn" onClick={() => setShowPwd(s => !s)}>
+                  {showPwd ? '🙈' : '👁'}
+                </button>
+              </div>
+              {errors.pwd && <div className="err-msg">⚠ {errors.pwd}</div>}
+            </div>
+
+            <div className="opts">
+              <div className="remember">
+                <input type="checkbox" id="rem" checked={remember} onChange={e => setRemember(e.target.checked)}/>
+                <label htmlFor="rem">Remember me</label>
+              </div>
+              <a href="#" className="forgot">Forgot password?</a>
+            </div>
+
+            <button type="submit" className="submit-btn" disabled={loading}>
+              {loading ? 'Logging in...' : 'Login to Wanderlust 🗺️'}
+            </button>
+          </form>
+
+          <div className="divider">or</div>
+          <div className="switch-link">New here? <a href="signup.html">Create free account</a></div>
+
+          <div className="demo-hint">
+            🧪 Try with demo account:<br/>
+            <strong>demo@wanderlust.com</strong> / <strong>demo1234</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<LoginPage/>);
+</script>
+</body>
+</html>
